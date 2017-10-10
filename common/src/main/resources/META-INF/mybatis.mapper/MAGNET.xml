@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.Lucifer2603.torrentHome.common.dao.MagnetDao">
+    <resultMap id="BaseResultMap" type="com.Lucifer2603.torrentHome.common.entity.MagnetEntity">
+        <id column="ID" jdbcType="BIGINT" property="id"/>
+        <result column="CREATED" jdbcType="TIMESTAMP" property="created"/>
+        <result column="MODIFIED" jdbcType="TIMESTAMP" property="modified"/>
+        <result column="VERSION" jdbcType="INTEGER" property="version"/>
+        <result column="CONTAINER_ID" jdbcType="BIGINT" property="containerId"/>
+        <result column="AGENCY_ID" jdbcType="BIGINT" property="agencyId"/>
+        <result column="AGENCY_CODE" jdbcType="VARCHAR" property="agencyCode"/>
+        <result column="STATUS" jdbcType="INTEGER" property="status"/>
+    </resultMap>
+    <sql id="Base_Column_List">
+        ID, CREATED, MODIFIED, VERSION, CONTAINER_ID, AGENCY_ID, AGENCY_CODE, STATUS
+    </sql>
+
+    <select id="selectAgencyByAgencyCode" resultMap="BaseResultMap">
+        select
+        <include refid="Base_Column_List"/>
+        from M_AGENCY
+        where AGENCY_CODE = #{agencyCode,jdbcType=VARCHAR}
+        AND CONTAINER_ID = #{containerId,jdbcType=BIGINT}
+        AND STATUS = 1
+    </select>
+
+    <select id="selectAgencysByAgencyCode" resultMap="BaseResultMap">
+        select
+        <include refid="Base_Column_List"/>
+        from M_AGENCY
+        where CONTAINER_ID = #{containerId,jdbcType=BIGINT}
+        AND AGENCY_CODE in
+        <foreach item="agencyCode" collection="agencyCodes" open="(" separator="," close=")">
+            #{agencyCode,jdbcType=VARCHAR}
+        </foreach>
+        AND STATUS = 1
+    </select>
+
+    <select id="selectAgencyByAgencyId" parameterType="java.lang.Long" resultMap="BaseResultMap">
+        select
+        <include refid="Base_Column_List"/>
+        from M_AGENCY
+        where AGENCY_ID = #{agencyId,jdbcType=BIGINT}
+    </select>
+
+    <insert id="insert" parameterType="com.baidu.fbu.clearing.common.entity.AgencyEntity">
+        insert into M_AGENCY (VERSION, CONTAINER_ID, AGENCY_ID,AGENCY_CODE, STATUS)
+        values (
+        #{version,jdbcType=INTEGER}, #{containerId,jdbcType=BIGINT}, #{agencyId,jdbcType=BIGINT},
+        #{agencyCode,jdbcType=VARCHAR}, #{status,jdbcType=INTEGER})
+    </insert>
+
+
+    <select id="selectByAgencyIds" resultMap="BaseResultMap">
+        select
+        <include refid="Base_Column_List"/>
+        from M_AGENCY
+        where AGENCY_ID in
+        <foreach item="agencyId" collection="agencyIds" open="(" separator="," close=")">
+            #{agencyId,jdbcType=VARCHAR}
+        </foreach>
+    </select>
+
+
+</mapper>
