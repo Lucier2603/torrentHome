@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:tx="http://www.springframework.org/schema/tx"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+       http://www.springframework.org/schema/beans/spring-beans-3.1.xsd
+	   http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx-3.1.xsd">
+
+    <!-- 创建mis的SqlSessionFactory，同时指定数据源 -->
+    <bean id="misSqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+        <property name="dataSource" ref="misDataSource"/>
+        <property name="typeHandlersPackage" value="com.baidu.fbu.fcore.common.mybatis.type"/>
+        <property name="mapperLocations">
+            <list>
+                <value>classpath*:/META-INF/mis/mybatis/mapper/*.xml</value>
+            </list>
+        </property>
+    </bean>
+
+    <!-- 创建clearing的SqlSessionFactory，同时指定数据源 -->
+    <bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+        <property name="dataSource" ref="bizDataSource"/>
+        <property name="typeHandlersPackage" value="com.baidu.fbu.fcore.common.mybatis.type"/>
+        <property name="mapperLocations">
+            <list>
+                <value>classpath*:/META-INF/mybatis/mapper/*.xml</value>
+            </list>
+        </property>
+    </bean>
+
+    <tx:annotation-driven transaction-manager="transactionManager"/>
+
+    <!-- (事务管理)transaction manager, use JtaTransactionManager for global tx -->
+    <bean id="transactionManager"
+          class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+        <property name="dataSource" ref="bizDataSource"/>
+    </bean>
+
+    <!-- Mapper接口所在包名，Spring会自动查找其下的Mapper -->
+    <bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+        <property name="basePackage" value="com.baidu.fbu.clearing.batch.dao.mis"/>
+        <property name="sqlSessionFactoryBeanName" value="misSqlSessionFactory"/>
+    </bean>
+
+    <!-- Mapper接口所在包名，Spring会自动查找其下的Mapper -->
+    <bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+        <property name="basePackage" value="com.baidu.fbu.**.dao"/>
+        <property name="sqlSessionFactoryBeanName" value="sqlSessionFactory"/>
+    </bean>
+
+
+    <bean id="bizDataSource" parent="abstractDataSource">
+        <property name="driverClassName" value="${biz.0.mysql.driver}"/>
+        <property name="maxActive" value="${biz.0.jdbc.maxActive}"/>
+        <property name="url" value="${biz.0.jdbc.url}"/>
+        <property name="username" value="${biz.0.jdbc.username}"/>
+        <property name="password" value="${biz.0.jdbc.password}"/>
+        <property name="numTestsPerEvictionRun" value="${biz.0.jdbc.numTestsPerEvictionRun}"/>
+    </bean>
+
+    <bean id="misDataSource" parent="abstractDataSource">
+        <property name="driverClassName" value="${biz.1.mysql.driver}"/>
+        <property name="maxActive" value="${biz.1.jdbc.maxActive}"/>
+        <property name="url" value="${biz.1.jdbc.url}"/>
+        <property name="username" value="${biz.1.jdbc.username}"/>
+        <property name="password" value="${biz.1.jdbc.password}"/>
+        <property name="numTestsPerEvictionRun" value="${biz.1.jdbc.numTestsPerEvictionRun}"/>
+    </bean>
+
+    <!-- 所有datasource公用的配置信息 -->
+    <bean id="abstractDataSource" class="com.alibaba.druid.pool.DruidDataSource"
+          destroy-method="close">
+        <property name="filters" value="${biz.datasource.filters}"/>
+        <property name="defaultAutoCommit" value="${biz.datasource.defaultAutoCommit}"/>
+        <property name="initialSize" value="${biz.datasource.initialSize}"/>
+        <property name="minIdle" value="${biz.datasource.minIdle}"/>
+        <property name="maxWait" value="${biz.datasource.maxWait}"/>
+        <property name="testWhileIdle" value="${biz.datasource.testWhileIdle}"/>
+        <property name="testOnBorrow" value="${biz.datasource.testOnBorrow}"/>
+        <property name="testOnReturn" value="${biz.datasource.testOnReturn}"/>
+        <property name="validationQuery" value="${biz.datasource.validationQuery}"/>
+        <property name="timeBetweenEvictionRunsMillis"
+                  value="${biz.datasource.timeBetweenEvictionRunsMillis}"/>
+        <property name="minEvictableIdleTimeMillis" value="${biz.datasource.minEvictableIdleTimeMillis}"/>
+        <property name="logAbandoned" value="${biz.datasource.logAbandoned}"/>
+        <property name="removeAbandoned" value="${biz.datasource.removeAbandoned}"/>
+        <property name="removeAbandonedTimeout" value="${biz.datasource.removeAbandonedTimeout}"/>
+        <property name="validationQueryTimeout" value="${biz.datasource.validationQueryTimeout}"/>
+    </bean>
+
+    <bean id="batchSqlSession" class="org.mybatis.spring.SqlSessionTemplate">
+        <constructor-arg index="0" ref="sqlSessionFactory"/>
+        <constructor-arg index="1" value="BATCH"/>
+    </bean>
+
+</beans>
+

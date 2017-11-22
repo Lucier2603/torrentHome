@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:task="http://www.springframework.org/schema/task"
+       xmlns:aop="http://www.springframework.org/schema/aop"
+       xmlns:optimistic-lock="http://www.baidu.com/fcore/common/schema/optimisticlock"
+       xmlns:exception-transform="http://www.baidu.com/fcore/common/schema/exception-transform"
+       xmlns:cache="http://www.springframework.org/schema/cache"
+       xsi:schemaLocation="http://www.springframework.org/schema/task http://www.springframework.org/schema/task/spring-task-4.0.xsd
+		http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-4.0.xsd
+		http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-4.0.xsd
+		http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop-4.2.xsd
+		http://www.baidu.com/fcore/common/schema/optimisticlock http://www.baidu.com/fcore/common/schema/optimisticlock.xsd
+		http://www.baidu.com/fcore/common/schema/exception-transform
+		http://www.baidu.com/fcore/common/schema/exception-transform.xsd http://www.springframework.org/schema/cache http://www.springframework.org/schema/cache/spring-cache.xsd">
+
+    <!-- reentry advice -->
+    <!--<bean id="reentryAdvice" class="com.baidu.fbu.fcore.common.lock.reentrylock.ReentryAdvice"></bean>-->
+    <!--<aop:config>-->
+    <!--<aop:aspect id="aspect1" ref="reentryAdvice" order="1">-->
+    <!--<aop:around-->
+    <!--pointcut="execution(* com.baidu.fbu.fcore.biz.service.*(..)) and @annotation(com.baidu.fbu.fcore.common.lock.reentrylock.ReentryAnnotation)"-->
+    <!--method="reentryAdvice"/>-->
+    <!--</aop:aspect>-->
+    <!--</aop:config>-->
+
+    <bean class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
+        <property name="ignoreResourceNotFound" value="true"/>
+        <property name="ignoreUnresolvablePlaceholders" value="true"/>
+        <property name="locations">
+            <list>
+                <value>classpath:config/config.properties</value>
+                <value>classpath:config/batch.properties</value>
+            </list>
+        </property>
+    </bean>
+
+
+    <aop:aspectj-autoproxy/>
+
+    <!-- 使用cglib进行动态代理 -->
+    <aop:aspectj-autoproxy proxy-target-class="true"/>
+
+    <task:annotation-driven/>
+
+    <optimistic-lock:annotation-driven order="100"/>
+    <exception-transform:annotation-driven order="200"/>
+
+    <context:property-placeholder order="1"
+                                  location="classpath:/*.properties" ignore-unresolvable="true"
+                                  ignore-resource-not-found="true" file-encoding="utf-8"/>
+
+    <!-- 使用annotation 自动注册bean, 并保证@Required、@Autowired的属性被注入 -->
+    <context:component-scan base-package="com.baidu.fbu.clearing"
+                            use-default-filters="false">
+        <context:include-filter type="annotation"
+                                expression="org.springframework.stereotype.Component"/>
+        <context:include-filter type="annotation"
+                                expression="org.springframework.stereotype.Service"/>
+    </context:component-scan>
+
+
+
+    <!-- cache -->
+    <context:component-scan base-package="com.baidu.fbu.clearing"/>
+
+    <cache:annotation-driven/>
+
+    <bean id="cacheManager" class="org.springframework.cache.support.SimpleCacheManager">
+        <property name="caches">
+            <set>
+                <bean class="org.springframework.cache.concurrent.ConcurrentMapCacheFactoryBean">
+                    <property name="name" value="default"/>
+                </bean>
+
+                <bean class="org.springframework.cache.concurrent.ConcurrentMapCacheFactoryBean">
+                    <property name="name" value="ClearingCache"/>
+                </bean>
+            </set>
+        </property>
+    </bean>
+
+
+
+    <!-- UID generator -->
+    <bean id="disposableWorkerIdAssigner" class="com.baidu.fbu.fcore.common.uid.worker.DisposableWorkerIdAssigner"/>
+    <bean id="cachedUidGenerator" class="com.baidu.fbu.fcore.common.uid.impl.CachedUidGenerator">
+        <property name="workerIdAssigner" ref="disposableWorkerIdAssigner"/>
+    </bean>
+
+    <import resource="spring-log-batch.xml"/>
+    <import resource="spring-validate-batch.xml"/>
+    <import resource="spring-db-batch.xml"/>
+    <import resource="spring-msoa.xml"/>
+
+</beans>
